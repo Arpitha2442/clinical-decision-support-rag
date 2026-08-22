@@ -1,0 +1,7 @@
+streamlit
+pandas
+transformers
+torch
+requests
+matplotlib
+seaborn
