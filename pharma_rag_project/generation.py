@@ -1,78 +1,48 @@
-import requests
 import json
-from typing import List, Dict
+import urllib.request
+from typing import List, Dict, Any
 
 class OllamaGenerator:
-    def __init__(self, model_name: str = "mistral", base_url: str = "http://localhost:11434"):
-        """
-        Initializes connection to the local Ollama instance running at T=0.0.
-        """
+    def __init__(self, model_name: str = "mistral", api_url: str = "http://localhost:11434/api/generate"):
         self.model_name = model_name
-        self.api_url = f"{base_url}/api/generate"
+        self.api_url = api_url
 
-    def format_prompt(self, query: str, contexts: List[Dict]) -> str:
-        """
-        Formats retrieved passages into a strict context-bounded prompt.
-        """
-        formatted_context = ""
-        for idx, doc in enumerate(contexts, 1):
-            formatted_context += (
-                f"--- Context Entry {idx} ---\n"
-                f"Drug Name: {doc.get('Nom', 'N/A')}\n"
-                f"Active Ingredients: {doc.get('Composition', 'N/A')}\n"
-                f"Indications/Uses: {doc.get('Prescription', 'N/A')}\n"
-                f"Dosage: {doc.get('Posologie', '[NO DATA]')}\n"
-                f"Contraindications: {doc.get('Contrindications', '[NO DATA]')}\n\n"
-            )
+    def generate(self, query: str, contexts: List[Dict[str, Any]]) -> str:
+        if not contexts:
+            return "⚠️ [NO DATA] No matching clinical records found in the database."
+
+        context_str = "\n---\n".join([str(c) for c in contexts])
+        
+        system_instruction = (
+            "You are a clinical decision support assistant. "
+            "Always respond strictly in English regardless of the language of the source documents. "
+            "Synthesize the answer using ONLY the context provided below. "
+            "If context fields contain French or another language, translate the meaning accurately into English. "
+            "Do not invent medical information not supported by context."
+        )
 
         prompt = (
-            "You are a clinical decision support system. Answer the user query using ONLY the provided contexts below. "
-            "Do NOT use external knowledge. If the answer is not contained in the context, output '[NO DATA]'.\n\n"
-            f"RETIREVED CONTEXT:\n{formatted_context}\n"
-            f"USER QUERY: {query}\n\n"
-            "CLINICAL ANSWER:"
+            f"{system_instruction}\n\n"
+            f"Retrieved Clinical Context:\n{context_str}\n\n"
+            f"User Query: {query}\n\n"
+            f"English Summary Answer:"
         )
-        return prompt
 
-    def generate(self, query: str, contexts: List[Dict]) -> str:
-        """
-        Sends the formatted prompt to local Ollama API with Temperature = 0.0.
-        """
-        if not contexts:
-            return "⚠️ [NO DATA] No relevant clinical records were found to answer your request."
-
-        prompt = self.format_prompt(query, contexts)
-        
         payload = {
             "model": self.model_name,
             "prompt": prompt,
             "stream": False,
-            "options": {
-                "temperature": 0.0,  # Zero temperature to enforce context-bounded determinism
-                "top_p": 0.1
-            }
+            "options": {"temperature": 0.0}
         }
 
         try:
-            response = requests.post(self.api_url, json=payload, timeout=30)
-            if response.status_code == 200:
-                result = response.json()
+            req = urllib.request.Request(
+                self.api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req) as response:
+                result = json.loads(response.read().decode("utf-8"))
                 return result.get("response", "").strip()
-            else:
-                return f"⚠️ Error from Ollama API (Status {response.status_code}): Could not generate response."
-        except requests.exceptions.ConnectionError:
-            return "⚠️ Error: Local Ollama service is not running. Please start Ollama using `ollama run mistral`."
-
-
-if __name__ == "__main__":
-    # Test execution
-    llm = OllamaGenerator(model_name="mistral")
-    sample_contexts = [{
-        "Nom": "PARACETAMOL",
-        "Composition": "Paracétamol 500mg",
-        "Prescription": "Mild to moderate pain relief and fever reduction.",
-        "Posologie": "1-2 tablets every 4 to 6 hours.",
-        "Contrindications": "Severe hepatic impairment."
-    }]
-    answer = llm.generate("What is the dosage for Paracetamol?", sample_contexts)
-    print("Generated LLM Answer:\n", answer)
+        except Exception as e:
+            raise RuntimeError(f"Ollama local API call failed: {str(e)}")
