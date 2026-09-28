@@ -5,3 +5,8 @@ torch
 requests
 matplotlib
 seaborn
+rank-bm25
+chromadb
+sentence-transformers
+numpy
+bert-score

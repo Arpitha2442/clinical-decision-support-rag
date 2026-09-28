@@ -9,3 +9,9 @@ What medicine is used for Cough?
 What is the indication for Albendazole?
 
 Fever treatment
+
+terminal
+
+ .\venv\Scripts\Activate.ps1
+
+streamlit run app.py --server.fileWatcherType none

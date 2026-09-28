@@ -54,10 +54,14 @@ with st.sidebar:
     st.caption("v2.5 | Clinical Intelligence System")
     st.divider()
     st.markdown("### ⚙️ System Status")
-    st.success("🟢 **Dense Search:** ChromaDB Vector")
-    st.success("🟢 **Sparse Search:** BM25 Keywords")
+    dense_status = "🟢" if getattr(rag.retriever, "collection", None) is not None else "🟡 (unavailable — using sparse only)"
+    st.success(f"{dense_status} **Dense Search:** ChromaDB + MiniLM") if dense_status.startswith("🟢") else st.warning(f"{dense_status} **Dense Search:** ChromaDB + MiniLM")
+    bm25_status = "🟢" if getattr(rag.retriever, "bm25", None) is not None else "🟡 (unavailable — using keyword fallback)"
+    st.success(f"{bm25_status} **Sparse Search:** BM25 Keywords") if bm25_status.startswith("🟢") else st.warning(f"{bm25_status} **Sparse Search:** BM25 Keywords")
     st.success("🟢 **Fusion Strategy:** RRF (k=60)")
-    st.success("🟢 **Safety Layer:** NLI Judge Active")
+    nli_status = "🟢" if getattr(rag.nli_judge, "model", None) is not None else "🟡 (unavailable — unverified fallback)"
+    st.success(f"{nli_status} **Safety Layer:** NLI Cross-Encoder") if nli_status.startswith("🟢") else st.warning(f"{nli_status} **Safety Layer:** NLI Cross-Encoder")
+    st.success("🟢 **Guardrail:** Indication vs. Side-Effect Filter")
     st.divider()
     
     with st.expander("📊 Dataset Overview"):
@@ -127,7 +131,7 @@ with tab1:
             llm_summary = rag.generate_llm_response(user_query, retrieved_docs)
             
             context_text = "\n".join([str(d) for d in retrieved_docs])
-            is_verified = rag.verify_claim(llm_summary, context_text)
+            nli_result = rag.verify_claim(llm_summary, context_text)
 
             t_summary, t_nli, t_sources = st.tabs([
                 "📋 Clinical Summary", 
@@ -141,24 +145,41 @@ with tab1:
 
             with t_nli:
                 st.markdown("#### 🛡️ NLI Fact Verification Metrics")
-                if is_verified:
-                    st.success("✅ **PASSED:** The generated summary is verified and grounded in source records.")
+                if nli_result.get("is_safe"):
+                    st.success(f"✅ **{nli_result.get('status', 'PASSED')}:** The generated summary is verified and grounded in source records.")
                 else:
-                    st.warning("⚠️ **FLAGGED:** Statement cannot be fully grounded in retrieved data.")
+                    st.warning(f"⚠️ **{nli_result.get('status', 'FLAGGED')}:** Statement cannot be fully grounded in retrieved data.")
+                st.metric("Entailment Score", f"{nli_result.get('score', 0):.2f}")
+                if "all_scores" in nli_result:
+                    st.caption(f"NLI class scores: {nli_result['all_scores']}")
 
             with t_sources:
                 st.markdown("#### 🔍 Retrieved Context Records")
                 for idx, doc in enumerate(retrieved_docs, start=1):
-                    with st.expander(f"Record #{idx} - {doc.get('Nom', 'Medication')}"):
+                    with st.expander(f"Record #{idx} - {doc.get('name', 'Medication')}"):
                         st.json(doc)
 
 # TAB 2: Evaluation Benchmark Dashboard
 with tab2:
     st.subheader("📊 Offline Benchmark & Architecture Comparisons")
     eval_file = "eval_results.csv"
-    
-    if os.path.exists(eval_file):
+
+    col_run, col_info = st.columns([1, 3])
+    with col_run:
+        run_now = st.button("▶️ Run Evaluation Now", use_container_width=True)
+    with col_info:
+        st.caption("Runs the live RAG engine against the benchmark set and scores it (BERTScore F1, NLI faithfulness, groundedness).")
+
+    df_eval = None
+    if run_now:
+        with st.spinner("Running benchmark against the live RAG engine..."):
+            from evaluate import run_evaluation
+            df_eval = run_evaluation(rag_engine=rag, output_csv=eval_file)
+        st.success("✅ Evaluation complete.")
+    elif os.path.exists(eval_file):
         df_eval = pd.read_csv(eval_file)
+
+    if df_eval is not None:
         st.dataframe(df_eval, use_container_width=True)
         
         st.markdown("---")
@@ -176,4 +197,4 @@ with tab2:
         ax.set_ylim(0, 100)
         st.pyplot(fig)
     else:
-        st.info("Run `python evaluate.py` to pre-generate benchmark metric charts here.")
+        st.info("Click **▶️ Run Evaluation Now** above, or run `python evaluate.py` from the terminal, to generate benchmark metrics here.")

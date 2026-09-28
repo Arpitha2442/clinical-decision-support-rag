@@ -1,4 +1,32 @@
-
-.appcat/
-.chroma/
+# Virtual environments
 venv/
+env/
+.venv/
+
+# Python bytecode / cache
+__pycache__/
+*.pyc
+*.pyo
+
+# ChromaDB local vector store (regenerated from dataset.csv on first run)
+.chroma/
+
+# App-specific cache (kept from original .gitignore)
+.appcat/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Generated benchmark output (regenerate with `python evaluate.py`)
+eval_results.csv
+
+# Environment variables / secrets
+.env
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
