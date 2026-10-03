@@ -15,7 +15,7 @@ A Retrieval-Augmented Generation (RAG) system built with **Streamlit**, **Pandas
 - **Offline benchmark dashboard** — a second app tab (and standalone `evaluate.py` / `plot_metrics.py` scripts) compares the proposed system against two baselines (HomeDOCtor, MEDIC) on BERTScore F1, faithfulness, and groundedness.
 
 ---
-
+uigiyfioigufhwoiowihvwevou
 ## 🏗️ Architecture
 
 ```
