@@ -443,8 +443,8 @@ with tab2:
 
                 with rx_t1:
                     if lookup_docs:
-                        for doc in lookup_docs:
-                            card_md = format_rag_drug_card(doc)
+                        if True:
+                            card_md = lookup_summary
                             st.markdown(
                                 f'<div class="rx-drug-card">{card_md}</div>',
                                 unsafe_allow_html=True,
