@@ -11,6 +11,7 @@ from prescription_scanner import (
     format_rag_drug_card,
     ScanStatus,
 )
+from tts import render_summary_heading_with_tts
 
 # Page Setup
 st.set_page_config(
@@ -214,7 +215,11 @@ with tab1:
             ])
 
             with t_summary:
-                st.markdown(f"#### Generated Summary for: *\"{user_query}\"*")
+                render_summary_heading_with_tts(
+                    "Generated Summary for:",
+                    llm_summary,
+                    emphasis=f"\"{user_query}\"",
+                )
                 st.markdown(f'<div class="clinical-card">{llm_summary}</div>', unsafe_allow_html=True)
 
             with t_nli:
@@ -450,7 +455,11 @@ with tab2:
                             "Try verifying the medicine name and searching again."
                         )
 
-                    st.markdown("##### 🤖 AI-Generated Summary")
+                    render_summary_heading_with_tts(
+                        "🤖 AI-Generated Summary",
+                        lookup_summary,
+                        level=5,
+                    )
                     st.markdown(
                         f'<div class="clinical-card">{lookup_summary}</div>',
                         unsafe_allow_html=True,

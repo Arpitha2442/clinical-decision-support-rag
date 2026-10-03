@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --tts-text: #F8FAFC;
+    --tts-muted: #94A3B8;
+    --tts-surface: #1E293B;
+    --tts-surface-hover: #134E4A;
+    --tts-border: #334155;
+    --tts-accent: #0D9488;
+    --tts-accent-soft: #5EEAD4;
+    --tts-accent-glow: rgba(13, 148, 136, 0.55);
+    --tts-accent-glow-off: rgba(13, 148, 136, 0);
+    --tts-focus: #38BDF8;
+    --tts-danger-bg: #3B1515;
+    --tts-danger-border: #7C2D12;
+    --tts-danger-text: #FCA5A5;
+    --tts-font: "Source Sans Pro", "Source Sans 3", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --tts-btn-size: 34px;
+    --tts-radius-pill: 999px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--tts-text);
+    font-family: var(--tts-font);
+    overflow: hidden;
+  }
+
+  .tts-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 0.2rem;
+  }
+
+  .tts-title {
+    margin: 0;
+    min-width: 0;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--tts-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tts-title--h4 { font-size: 1.25rem; }
+  .tts-title--h5 { font-size: 1.05rem; }
+
+  .tts-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .tts-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tts-btn-size);
+    height: var(--tts-btn-size);
+    padding: 0;
+    border-radius: var(--tts-radius-pill);
+    border: 1px solid var(--tts-border);
+    background: var(--tts-surface);
+    color: var(--tts-muted);
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 100ms ease;
+  }
+  .tts-btn svg { width: 16px; height: 16px; pointer-events: none; }
+  .tts-btn:hover:not(:disabled) {
+    background: var(--tts-surface-hover);
+    border-color: var(--tts-accent);
+    color: var(--tts-accent-soft);
+  }
+  .tts-btn:active:not(:disabled) { transform: scale(0.94); }
+  .tts-btn:focus-visible { outline: 2px solid var(--tts-focus); outline-offset: 2px; }
+  .tts-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .tts-btn--primary { color: var(--tts-accent-soft); }
+  .tts-btn--primary.is-active {
+    background: var(--tts-surface-hover);
+    border-color: var(--tts-accent);
+    animation: tts-pulse 1.6s ease-out infinite;
+  }
+
+  .tts-secondary { display: none; gap: 0.35rem; }
+  .tts-secondary.is-visible { display: inline-flex; }
+
+  .tts-status {
+    margin-top: 0.35rem;
+    min-height: 1.2rem;
+    font-size: 0.8rem;
+    line-height: 1.2rem;
+    color: var(--tts-muted);
+  }
+  .tts-status.is-error {
+    display: inline-block;
+    padding: 0 0.6rem;
+    border: 1px solid var(--tts-danger-border);
+    border-radius: 6px;
+    background: var(--tts-danger-bg);
+    color: var(--tts-danger-text);
+  }
+
+  @keyframes tts-pulse {
+    0%   { box-shadow: 0 0 0 0 var(--tts-accent-glow); }
+    70%  { box-shadow: 0 0 0 8px var(--tts-accent-glow-off); }
+    100% { box-shadow: 0 0 0 0 var(--tts-accent-glow-off); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tts-btn--primary.is-active { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="tts-header">
+    <{{TAG}} class="tts-title tts-title--{{TAG}}" title="{{TITLE_ATTR}}">{{TITLE_HTML}}</{{TAG}}>
+    <div class="tts-controls" role="group" aria-label="Read summary aloud controls">
+      <button id="tts-play" class="tts-btn tts-btn--primary" type="button"
+              aria-label="Read summary aloud" title="Read summary aloud">
+        <!-- lucide: volume-2 -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+      </button>
+      <span id="tts-secondary" class="tts-secondary">
+        <button id="tts-pause" class="tts-btn" type="button" aria-label="Pause reading" title="Pause"></button>
+        <button id="tts-stop" class="tts-btn" type="button" aria-label="Stop reading" title="Stop">
+          <!-- lucide: square -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+          </svg>
+        </button>
+      </span>
+    </div>
+  </div>
+  <div id="tts-status" class="tts-status" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const CHUNKS = {{CHUNKS_JSON}};
+
+  // lucide: pause / play
+  const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>';
+  const ICON_RESUME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>';
+
+  const ERROR_MESSAGES = {
+    "synthesis-unavailable": "No speech engine is available in this browser.",
+    "synthesis-failed": "The speech engine failed to generate audio.",
+    "audio-busy": "The audio device is busy. Close other audio apps and try again.",
+    "audio-hardware": "No audio output device was found.",
+    "network": "A network error interrupted the online voice.",
+    "language-unavailable": "English speech is not available on this device.",
+    "voice-unavailable": "The English voice is unavailable on this device.",
+    "not-allowed": "Playback was blocked by the browser. Click the speaker icon to try again.",
+    "text-too-long": "Part of the summary was too long to speak.",
+    "invalid-argument": "The speech settings were rejected by the browser."
+  };
+  const IDLE_HINT = "Listen to this summary";
+
+  const synth = window.speechSynthesis;
+  const playBtn = document.getElementById("tts-play");
+  const pauseBtn = document.getElementById("tts-pause");
+  const stopBtn = document.getElementById("tts-stop");
+  const secondary = document.getElementById("tts-secondary");
+  const statusEl = document.getElementById("tts-status");
+
+  const instanceId = Math.random().toString(36).slice(2);
+  const channel = "BroadcastChannel" in window ? new BroadcastChannel("pharmarag-tts") : null;
+
+  let state = "idle"; // idle | speaking | paused
+  let index = 0;
+  let runId = 0;
+  let startTimer = null;
+  let voice = null;
+
+  function setStatus(message, isError) {
+    statusEl.textContent = message || "";
+    statusEl.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function setState(next) {
+    state = next;
+    const active = next !== "idle";
+    playBtn.classList.toggle("is-active", next === "speaking");
+    playBtn.setAttribute("aria-pressed", String(active));
+    secondary.classList.toggle("is-visible", active);
+    pauseBtn.innerHTML = next === "paused" ? ICON_RESUME : ICON_PAUSE;
+    const pauseLabel = next === "paused" ? "Resume reading" : "Pause reading";
+    pauseBtn.setAttribute("aria-label", pauseLabel);
+    pauseBtn.title = next === "paused" ? "Resume" : "Pause";
+  }
+
+  function pickVoice() {
+    const voices = synth.getVoices() || [];
+    return (
+      voices.find((v) => v.lang === "en-US" && v.localService) ||
+      voices.find((v) => v.lang === "en-US") ||
+      voices.find((v) => /^en[-_]/i.test(v.lang)) ||
+      null
+    );
+  }
+
+  function progressText() {
+    return `Reading aloud… ${index + 1}/${CHUNKS.length}`;
+  }
+
+  function fail(message) {
+    runId += 1;
+    clearTimeout(startTimer);
+    try { synth.cancel(); } catch (_) { /* ignore */ }
+    setState("idle");
+    setStatus(`Speech failed: ${message}`, true);
+  }
+
+  function speakFrom(i, id) {
+    if (id !== runId) return;
+    if (i >= CHUNKS.length) {
+      clearTimeout(startTimer);
+      setState("idle");
+      setStatus("Finished reading summary.");
+      return;
+    }
+    index = i;
+    let utterance;
+    try {
+      utterance = new SpeechSynthesisUtterance(CHUNKS[i]);
+    } catch (err) {
+      fail("Could not prepare the speech audio.");
+      return;
+    }
+    utterance.lang = voice ? voice.lang : "en-US";
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.95;
+    utterance.onstart = () => {
+      if (id !== runId) return;
+      clearTimeout(startTimer);
+      if (state === "speaking") setStatus(progressText());
+    };
+    utterance.onend = () => speakFrom(i + 1, id);
+    utterance.onerror = (event) => {
+      if (id !== runId) return;
+      if (event.error === "interrupted" || event.error === "canceled") return;
+      fail(ERROR_MESSAGES[event.error] || `Unexpected error (${event.error || "unknown"}).`);
+    };
+    synth.speak(utterance);
+  }
+
+  function play() {
+    if (state === "paused") { togglePause(); return; }
+    if (state === "speaking") return;
+
+    if (channel) channel.postMessage({ type: "play", from: instanceId });
+    synth.cancel();
+    voice = pickVoice();
+
+    const id = ++runId;
+    setState("speaking");
+    setStatus(voice ? "Starting…" : "Starting… (using the default English voice)");
+
+    startTimer = setTimeout(() => {
+      if (id === runId && state === "speaking" && !synth.speaking) {
+        fail("The speech engine did not start. Check that audio is not muted and your browser supports text-to-speech.");
+      }
+    }, 5000);
+
+    // Small delay: Chrome can drop an utterance queued immediately after cancel().
+    setTimeout(() => speakFrom(0, id), 60);
+  }
+
+  function togglePause() {
+    if (state === "speaking") {
+      synth.pause();
+      setState("paused");
+      setStatus("Paused.");
+    } else if (state === "paused") {
+      synth.resume();
+      setState("speaking");
+      setStatus(progressText());
+    }
+  }
+
+  function stop() {
+    runId += 1;
+    clearTimeout(startTimer);
+    synth.cancel();
+    setState("idle");
+    setStatus("Stopped.");
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  pauseBtn.innerHTML = ICON_PAUSE;
+
+  if (!synth || typeof window.SpeechSynthesisUtterance === "undefined") {
+    playBtn.disabled = true;
+    setStatus("Text-to-speech is not supported in this browser. Try Chrome, Edge or Safari.", true);
+    return;
+  }
+  if (!Array.isArray(CHUNKS) || CHUNKS.length === 0) {
+    playBtn.disabled = true;
+    setStatus("Nothing to read: the summary is empty.");
+    return;
+  }
+
+  setStatus(IDLE_HINT);
+  if (!synth.getVoices().length && "onvoiceschanged" in synth) {
+    synth.addEventListener("voiceschanged", () => { voice = pickVoice(); }, { once: true });
+  }
+
+  playBtn.addEventListener("click", play);
+  pauseBtn.addEventListener("click", togglePause);
+  stopBtn.addEventListener("click", stop);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state !== "idle") stop();
+  });
+
+  // Another summary player started: reset this one's UI (the engine is shared).
+  if (channel) {
+    channel.onmessage = (e) => {
+      const msg = e.data || {};
+      if (msg.type === "play" && msg.from !== instanceId && state !== "idle") {
+        runId += 1;
+        clearTimeout(startTimer);
+        setState("idle");
+        setStatus(IDLE_HINT);
+      }
+    };
+  }
+
+  // Summary re-rendered (new search) → don't keep reading stale text.
+  window.addEventListener("pagehide", () => {
+    if (state !== "idle") synth.cancel();
+  });
+})();
+</script>
+</body>
+</html>
