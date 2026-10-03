@@ -14,8 +14,7 @@ A Retrieval-Augmented Generation (RAG) system built with **Streamlit**, **Pandas
 - **Safety verification layer** (`nli_judge.py`) — checks the generated answer against the retrieved context before it's shown to the user, surfaced in the UI as a PASSED/FLAGGED badge.
 - **Offline benchmark dashboard** — a second app tab (and standalone `evaluate.py` / `plot_metrics.py` scripts) compares the proposed system against two baselines (HomeDOCtor, MEDIC) on BERTScore F1, faithfulness, and groundedness.
 
----
-uigiyfioigufhwoiowihvwevou
+-
 ## 🏗️ Architecture
 
 ```
