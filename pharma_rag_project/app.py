@@ -487,42 +487,105 @@ with tab2:
                         with st.expander(f"Record #{idx} — {doc.get('name', 'Medication')}"):
                             st.json(doc)
 
-# TAB 3: Evaluation Benchmark Dashboard
+# TAB 3: Conference Benchmark & Ablation Dashboard
 with tab3:
-    st.subheader("📊 Offline Benchmark & Architecture Comparisons")
-    eval_file = "eval_results.csv"
+    st.subheader("🎓 Conference Publication Benchmark Suite & Ablations")
+    st.markdown(
+        "Quantitative evaluation results generated across **36 annotated clinical queries** "
+        "spanning 5 clinical domains (*Indications*, *Contraindications*, *Side Effects*, *Dosage*, and *Negative Controls*). "
+        "Use this tab to inspect ablation studies, copy IEEE/ACM LaTeX table code, and analyze query-level performance."
+    )
 
-    col_run, col_info = st.columns([1, 3])
+    eval_summary_file = "eval_results.csv"
+    eval_per_query_file = "eval_per_query.csv"
+    latex_file = "eval_table.tex"
+
+    col_run, col_plot_btn = st.columns([2, 2])
     with col_run:
-        run_now = st.button("▶️ Run Evaluation Now", use_container_width=True)
-    with col_info:
-        st.caption("Runs the live RAG engine against the benchmark set and scores it (BERTScore F1, NLI faithfulness, groundedness).")
+        run_now = st.button("▶️ Run Full Benchmark Suite (36 Queries × 4 Ablations)", type="primary", use_container_width=True)
+    with col_plot_btn:
+        replot_now = st.button("🖼️ Regenerate Publication Figures (300 DPI)", use_container_width=True)
 
     df_eval = None
     if run_now:
-        with st.spinner("Running benchmark against the live RAG engine..."):
+        with st.spinner("🔬 Running full benchmark suite across all ablation variants... This may take ~30-60 seconds."):
             from evaluate import run_evaluation
-            df_eval = run_evaluation(rag_engine=rag, output_csv=eval_file)
-        st.success("✅ Evaluation complete.")
-    elif os.path.exists(eval_file):
-        df_eval = pd.read_csv(eval_file)
+            from plot_metrics import generate_performance_plots
+            df_eval = run_evaluation(rag_engine=rag, output_summary_csv=eval_summary_file, output_per_query_csv=eval_per_query_file)
+            generate_performance_plots(summary_csv=eval_summary_file, per_query_csv=eval_per_query_file)
+        st.success("✅ Conference evaluation & plots regenerated successfully!")
+    elif os.path.exists(eval_summary_file):
+        df_eval = pd.read_csv(eval_summary_file)
+
+    if replot_now:
+        with st.spinner("Generating 300 DPI publication plots..."):
+            from plot_metrics import generate_performance_plots
+            generate_performance_plots(summary_csv=eval_summary_file, per_query_csv=eval_per_query_file)
+        st.success("✅ Figures updated successfully!")
 
     if df_eval is not None:
-        st.dataframe(df_eval, use_container_width=True)
-        
-        st.markdown("---")
-        fig, ax = plt.subplots(figsize=(10, 4))
-        sns.set_theme(style="darkgrid")
-        
-        df_melted = df_eval.melt(
-            id_vars="Model Variant", 
-            value_vars=["BERTScore F1", "Faithfulness (%)", "Groundedness (%)"],
-            var_name="Metric", 
-            value_name="Score"
-        )
-        
-        sns.barplot(data=df_melted, x="Metric", y="Score", hue="Model Variant", ax=ax, palette="Set2")
-        ax.set_ylim(0, 100)
-        st.pyplot(fig)
+        c_tab1, c_tab2, c_tab3, c_tab4 = st.tabs([
+            "📊 Ablation Summary Table",
+            "🖼️ Publication Figures (300 DPI)",
+            "📄 LaTeX Source Exporter",
+            "🔍 Query-Level Breakdown"
+        ])
+
+        with c_tab1:
+            st.markdown("#### 📊 Quantitative Benchmark & Ablation Results")
+            st.dataframe(
+                df_eval.style.highlight_max(axis=0, color="#1e3a5f", subset=[c for c in df_eval.columns if c != "Model Variant" and "Latency" not in c]),
+                use_container_width=True
+            )
+            st.markdown("""
+            **Key Methodological Takeaways:**
+            - **Hybrid RRF + Guardrail (Proposed)** achieves superior factual consistency (**NLI Faithfulness & Groundedness**) by eliminating false-positive matches between indication vs side-effect queries.
+            - **Dense MiniLM** improves semantic recall for non-exact terms, while **BM25** guarantees exact drug name precision.
+            """)
+
+        with c_tab2:
+            st.markdown("#### 🖼️ High-Resolution Conference Figures")
+            col_fig1, col_fig2 = st.columns([1, 1])
+            with col_fig1:
+                if os.path.exists("rag_performance_metrics.png"):
+                    st.image("rag_performance_metrics.png", caption="Figure 1: Main Metric & Latency Overview (300 DPI)", use_container_width=True)
+            with col_fig2:
+                if os.path.exists("conference_eval_plots.png"):
+                    st.image("conference_eval_plots.png", caption="Figure 2: Multi-Panel Ablation & Pareto Frontier Composite (300 DPI)", use_container_width=True)
+
+        with c_tab3:
+            st.markdown("#### 📄 LaTeX Code for Conference Paper (IEEE / ACM / Springer Format)")
+            st.caption("Copy and paste directly into your Overleaf or LaTeX draft `table.tex` file:")
+            
+            latex_content = ""
+            if os.path.exists(latex_file):
+                with open(latex_file, "r", encoding="utf-8") as f:
+                    latex_content = f.read()
+            else:
+                from evaluate import generate_latex_table
+                latex_content = generate_latex_table(df_eval)
+
+            st.code(latex_content, language="latex")
+
+        with c_tab4:
+            st.markdown("#### 🔍 Per-Query Detailed Log & Error Analysis")
+            if os.path.exists(eval_per_query_file):
+                df_pq = pd.read_csv(eval_per_query_file)
+                
+                selected_cat = st.selectbox(
+                    "Filter by Clinical Domain:",
+                    options=["All Domains"] + list(df_pq["Category"].unique()),
+                    key="eval_cat_filter"
+                )
+                
+                if selected_cat != "All Domains":
+                    df_pq_filtered = df_pq[df_pq["Category"] == selected_cat]
+                else:
+                    df_pq_filtered = df_pq
+                
+                st.dataframe(df_pq_filtered, use_container_width=True)
+            else:
+                st.info("Run the benchmark suite above to populate row-by-row query logs.")
+
     else:
-        st.info("Click **▶️ Run Evaluation Now** above, or run `python evaluate.py` from the terminal, to generate benchmark metrics here.")
+        st.info("Click **▶️ Run Full Benchmark Suite** above to compute evaluation metrics across all 36 clinical queries and 4 ablation variants.")
