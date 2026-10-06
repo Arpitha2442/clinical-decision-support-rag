@@ -89,7 +89,7 @@ python plot_metrics.py
 
 ```bash
 git clone https://github.com/Arpitha2442/clinical-decision-support-rag.git
-cd clinical-decision-support-rag/pharma_rag_project
+cd clinical-decision-support-rag
 
 python -m venv venv
 ```
@@ -130,19 +130,17 @@ Place your pharmaceutical dataset CSV as `dataset.csv` in the project root, or a
 streamlit run app.py --server.fileWatcherType none
 ```
 
-### 6. Offline Model Comparison
+### 6. Offline Model Comparison & Conference Evaluation
 
-The **📊 Offline Model Comparison** tab in the app was previously non-functional — `evaluate.py` never actually wrote `eval_results.csv`, so the tab always showed a "run evaluate.py" placeholder. This is now fixed:
+Run the full 36-query clinical benchmark suite and generate conference tables/plots:
 
 - **From the terminal:**
   ```bash
-  python evaluate.py
+  python reproduce_results.py
   ```
-- **From the app:** open the *Offline Model Comparison* tab and click **▶️ Run Evaluation Now**.
+- **From the app:** open the *🎓 Conference Publication Benchmark Suite & Ablations* tab and click **▶️ Run Full Benchmark Suite**.
 
-Either way, it runs your live RAG engine (retrieval → generation → NLI verification) against a small benchmark set, scores it on BERTScore F1 and NLI-based faithfulness/groundedness, and writes `eval_results.csv`. The two baseline rows (HomeDOCtor, MEDIC) are fixed comparison numbers — there's no live implementation of those systems in this repo, only the proposed system is actually run.
-
-`bert-score` is now in `requirement.txt` for real semantic-similarity scoring; without it, `evaluate.py` falls back to a coarser token-overlap F1 proxy automatically.
+Either way, it runs your live RAG engine against 36 annotated queries across 4 ablation models, scores BERTScore F1, ROUGE-L, BLEU-4, NLI Faithfulness %, Groundedness %, and Recall@3, generates 300 DPI figures (`conference_eval_plots.png`), and writes an IEEE/ACM LaTeX table (`eval_table.tex`).
 
 ---
 
@@ -166,13 +164,21 @@ See `Query.txt` for ready-to-paste examples, e.g.:
 ## 📂 Project Structure
 
 ```
-pharma_rag_project/
-├── app.py                     # Streamlit UI
-├── rag_engine.py               # Retrieval + orchestration
-├── generation.py               # Ollama LLM wrapper
-├── nli_judge.py                 # Faithfulness/safety check
-├── evaluate.py                  # RAGAS benchmark harness
-├── plot_metrics.py              # Benchmark chart generator
+clinical-decision-support-rag/
+├── app.py                     # Streamlit UI Dashboard
+├── rag_engine.py               # Hybrid retrieval (BM25 + Dense RRF) & guardrails
+├── generation.py               # Local Ollama LLM wrapper
+├── nli_judge.py                 # Faithfulness & safety cross-encoder audit
+├── evaluate.py                  # 36-query clinical benchmark harness & LaTeX exporter
+├── plot_metrics.py              # 300 DPI conference plot generator
+├── reproduce_results.py        # One-click reproducibility script
+├── paper_draft.md               # Conference paper draft (IEEE / ACM format)
+├── dataset.csv                  # Pharmaceutical dataset
+├── Query.txt                    # Sample queries
+├── requirement.txt              # Python dependencies
+├── rag_performance_metrics.png  # Overview performance plot
+└── conference_eval_plots.png    # Composite multi-panel ablation figures
+```
 ├── dataset.csv                  # Pharmaceutical dataset
 ├── Query.txt                    # Sample queries
 ├── requirement.txt              # Python dependencies
