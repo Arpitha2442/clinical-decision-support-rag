@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 
 from generation import OllamaGenerator
 from nli_judge import NLISafetyJudge
+from summary_writer import compose_summary
 
 try:
     from rank_bm25 import BM25Okapi
@@ -221,20 +222,13 @@ class RAGEngine:
         return [self.passages[i] for i in candidate_idx[:top_k]] or self.passages[:top_k]
 
     def generate_llm_response(self, query: str, contexts: List[Dict[str, Any]]) -> str:
-        """Delegates output generation to generation.py in English."""
+        """Delegates output generation to generation.py in English. If the local
+        LLM is unavailable, falls back to a deterministic, record-only
+        conversational summary (summary_writer.compose_summary)."""
         try:
             return self.generator.generate(query, contexts)
         except Exception:
-            if not contexts:
-                return "⚠️ [NO DATA] No relevant clinical records were found to answer your request."
-            doc = contexts[0]
-            return (
-                f"**Medication:** {doc.get('name', 'N/A')}\n\n"
-                f"**Indications:** {doc.get('indications', NO_DATA)}\n\n"
-                f"**Dosage:** {doc.get('dosage', NO_DATA)}\n\n"
-                f"**Contraindications:** {doc.get('contraindications', NO_DATA)}\n\n"
-                f"**Side Effects:** {doc.get('side_effects', NO_DATA)}"
-            )
+            return compose_summary(query, contexts)
 
     def verify_claim(self, response: str, context_block: str) -> Dict[str, Any]:
         """Delegates faithfulness verification to nli_judge.py. Returns the

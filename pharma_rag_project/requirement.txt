@@ -10,3 +10,5 @@ chromadb
 sentence-transformers
 numpy
 bert-score
+pytesseract
+Pillow
