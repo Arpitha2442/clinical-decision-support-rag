@@ -273,13 +273,13 @@ def format_rag_drug_card(doc: dict) -> str:
     name = doc.get('name', 'Unknown')
     return (
         f'### {name}\n\n'
-        + _field('Composition', doc.get('composition', NO_DATA), 'Composition:')
+        + _field('Composition', doc.get('composition', NO_DATA), '\U0001F9EA')
         + '\n'
-        + _field('Common Uses / Indications', doc.get('indications', NO_DATA), 'Uses:')
+        + _field('Common Uses / Indications', doc.get('indications', NO_DATA), '\U0001F48A')
         + '\n'
-        + _field('Dosage', doc.get('dosage', NO_DATA), 'Dosage:')
+        + _field('Dosage', doc.get('dosage', NO_DATA), '\U0001F4CB')
         + '\n'
-        + _field('Contraindications', doc.get('contraindications', NO_DATA), 'Contraindications:')
+        + _field('Contraindications', doc.get('contraindications', NO_DATA), '\U000026A0')
         + '\n'
-        + _field('Possible Side Effects', doc.get('side_effects', NO_DATA), 'Side Effects:')
+        + _field('Possible Side Effects', doc.get('side_effects', NO_DATA), '\U0001F52C')
     )

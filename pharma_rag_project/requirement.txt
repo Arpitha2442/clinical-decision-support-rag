@@ -11,4 +11,5 @@ sentence-transformers
 numpy
 bert-score
 pytesseract
+easyocr
 Pillow

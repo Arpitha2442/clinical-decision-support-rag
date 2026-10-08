@@ -443,12 +443,11 @@ with tab2:
 
                 with rx_t1:
                     if lookup_docs:
-                        if True:
-                            card_md = lookup_summary
-                            st.markdown(
-                                f'<div class="rx-drug-card">{card_md}</div>',
-                                unsafe_allow_html=True,
-                            )
+                        card_md = format_rag_drug_card(lookup_docs[0])
+                        st.markdown(
+                            f'<div class="rx-drug-card">{card_md}</div>',
+                            unsafe_allow_html=True,
+                        )
                     else:
                         st.warning(
                             "No matching records found in the pharmaceutical dataset. "
